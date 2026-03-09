@@ -1,3 +1,5 @@
+﻿# Purchase-point
+
 # Purchase Point Backend
 
 This is a Node.js and Express-based backend API for the "Purchase Point" project, originally migrated from MongoDB to MySQL using Sequelize ORM. It features user authentication, product management, and order processing.
