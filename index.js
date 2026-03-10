@@ -1,7 +1,7 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const db = require('./config/db');
-require('dotenv').config();
 
 const app = express();
 
@@ -24,8 +24,8 @@ app.use('/api/seller', require('./routes/seller'));
 app.use('/api/admin', require('./routes/admin'));
 
 // Database Connection
-db.sequelize.sync()
-  .then(() => console.log('MySQL Connected'))
+db.sequelize.sync({ alter: true })
+  .then(() => console.log('MySQL Connected and Tables Altered'))
   .catch(err => console.error('MySQL Connection Error:', err));
 
 const PORT = process.env.PORT || 5000;

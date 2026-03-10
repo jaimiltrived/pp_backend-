@@ -1,20 +1,25 @@
 const mysql = require('mysql2/promise');
-const config = require('./config/config.json').development;
+require('dotenv').config();
 
 async function initDB() {
+  const host = process.env.DB_HOST || 'localhost';
+  const user = process.env.DB_USER || 'root';
+  const password = process.env.DB_PASS || '';
+  const database = process.env.DB_NAME || 'purchase_point';
+
   try {
     // Connect without specifying a database first
     const connection = await mysql.createConnection({
-      host: config.host,
-      user: config.username,
-      password: config.password,
+      host,
+      user,
+      password,
     });
 
-    console.log(`Connected to MySQL at ${config.host} as ${config.username}`);
+    console.log(`Connected to MySQL at ${host} as ${user}`);
 
     // Create the database if it doesn't exist
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${config.database}\`;`);
-    console.log(`Database '${config.database}' created or already exists.`);
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
+    console.log(`Database '${database}' created or already exists.`);
 
     await connection.end();
     process.exit(0);
@@ -24,11 +29,11 @@ async function initDB() {
     console.error('Message:', error.message);
     
     if (error.code === 'ER_ACCESS_DENIED_ERROR') {
-      console.log('\nTIP: The username or password in config/config.json is incorrect.');
+      console.log('\nTIP: The username or password in .env is incorrect.');
       console.log('Common defaults for local MySQL:');
-      console.log(' - User: root, Password: (empty)');
-      console.log(' - User: root, Password: root');
-      console.log(' - User: root, Password: password');
+      console.log(' - DB_USER: root, DB_PASS: (empty)');
+      console.log(' - DB_USER: root, DB_PASS: root');
+      console.log(' - DB_USER: root, DB_PASS: password');
     } else if (error.code === 'ECONNREFUSED') {
       console.log('\nTIP: MySQL server is not running or the host/port is wrong.');
     }

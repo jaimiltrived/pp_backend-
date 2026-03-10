@@ -51,10 +51,14 @@ Response:
 ```
 POST /api/auth/login/apple
 {
-  "identity_token": "apple_token",
+  "identity_token": "apple_jwt_token", (optional if email/name provided for simulation)
   "email": "user@example.com",
   "name": "User Name"
 }
+Response:
+- Decodes identity_token if provided to extract email
+- New user → create account, status='registered', onboarding_step=0
+- Existing user → login, returns JWT token
 ```
 
 ### 5. Role Selection (Buyer/Seller) - GATE 1
@@ -81,6 +85,26 @@ Validation:
 - Password min 8 chars
 - Passwords must match
 - Unique email
+```
+
+### 7. Forgot Password Flow
+```
+1. Request OTP: POST /api/auth/forgot-password
+   { "email": "user@example.com" }
+   Response: { "message": "Reset OTP sent to email" }
+
+2. Verify OTP: POST /api/auth/verify-reset-otp
+   { "email": "user@example.com", "otp": "123456" }
+   Response: { "message": "OTP verified successfully" }
+
+3. Reset Password: POST /api/auth/reset-password
+   { 
+     "email": "user@example.com", 
+     "otp": "123456", 
+     "new_password": "newpassword123", 
+     "confirm_password": "newpassword123" 
+   }
+   Response: { "message": "Password reset successful" }
 ```
 
 ---

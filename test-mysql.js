@@ -11,10 +11,10 @@ const runTests = async () => {
     const signupRes = await axios.post(`${API_URL}/auth/signup`, {
       name: 'John Doe',
       email: `john${Date.now()}@example.com`,
-      password: 'password123'
+      password: 'password123',
+      confirm_password: 'password123'
     });
     console.log('Signup Successful:', signupRes.data.user.email);
-    const token = signupRes.data.token;
 
     // 2. Login
     console.log('\n2. Testing Login...');
@@ -23,6 +23,17 @@ const runTests = async () => {
       password: 'password123'
     });
     console.log('Login Successful:', loginRes.data.user.email);
+    const token = loginRes.data.token;
+
+    // 2.1 Testing Apple Login (Simulated)
+    console.log('\n2.1 Testing Apple Login (Simulated)...');
+    const appleEmail = `apple${Date.now()}@example.com`;
+    const appleRes = await axios.post(`${API_URL}/auth/login/apple`, {
+      email: appleEmail,
+      name: 'Apple Test User'
+    });
+    console.log('Apple Login Successful (New User):', appleRes.data.user.email);
+    console.log('Action:', appleRes.data.action);
 
     // 3. Create Product
     console.log('\n3. Testing Product Creation...');

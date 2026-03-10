@@ -21,6 +21,10 @@ module.exports = (sequelize, DataTypes) => {
     imageUrl: {
       type: DataTypes.STRING,
     },
+    embedding: {
+      type: DataTypes.BLOB('long'),
+      allowNull: true,
+    },
   });
   return Product;
 };

@@ -1,4 +1,4 @@
-const { User, Organization, OrganizationInfo, PersonalInfo, IndustryCode, PaymentMethod, OTP } = require('../config/db');
+const { User, Organization, OrganizationInfo, PersonalInfo, IndustryCode, PaymentMethod, OTP, UserIndustry } = require('../config/db');
 const OTPService = require('../utils/OTPService');
 const EmailService = require('../utils/EmailService');
 
@@ -329,7 +329,15 @@ exports.selectIndustry = async (req, res) => {
       return res.status(400).json({ error: 'Invalid step order' });
     }
 
-    // TODO: Create pivot table entries in UserIndustry
+    // Create pivot table entries in UserIndustry
+    if (industry_codes && industry_codes.length > 0) {
+      await UserIndustry.destroy({ where: { UserId: user_id } }); // Clear existing if any
+      const entries = industry_codes.map(codeId => ({
+        UserId: user_id,
+        IndustryCodeId: codeId
+      }));
+      await UserIndustry.bulkCreate(entries);
+    }
 
     user.onboarding_step = 7;
     await user.save();

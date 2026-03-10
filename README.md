@@ -1,4 +1,4 @@
-﻿# Purchase-point
+# Purchase-point
 
 # Purchase Point Backend
 
@@ -24,18 +24,18 @@ This is a Node.js and Express-based backend API for the "Purchase Point" project
 npm install
 ```
 
-### 2. Configure Database
-Open [config/config.json](file:///d:/Purchase%20point/config/config.json) and update your MySQL root password:
-```json
-{
-  "development": {
-    "username": "root",
-    "password": "YOUR_ACTUAL_PASSWORD",
-    "database": "purchase_point",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
-  }
-}
+### 2. Configure Environment Variables
+Create a [.env](file:///c:/Users/ADMIN/Downloads/Purchase%20point/Purchase-point/.env) file in the root directory (one has been created for you):
+```env
+PORT=5000
+JWT_SECRET=your_jwt_secret_key
+
+# Database Configuration
+DB_HOST=127.0.0.1
+DB_USER=root
+DB_PASS=password
+DB_NAME=purchase_point
+DB_DIALECT=mysql
 ```
 
 ### 3. Initialize Database
@@ -44,14 +44,7 @@ Run the automated script to create the database schema:
 node init-db.js
 ```
 
-### 4. Configure Environment Variables
-Create a [.env](file:///d:/Purchase%20point/.env) file in the root directory:
-```env
-PORT=5000
-JWT_SECRET=your_jwt_secret_key
-```
-
-### 5. Start the Server
+### 4. Start the Server
 ```bash
 node index.js
 ```
