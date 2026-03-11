@@ -78,5 +78,27 @@ node test-mysql.js
 - `config/`: Database configuration and connection.
 - `controllers/`: Business logic for handling requests.
 - `middleware/`: Authentication and other security checks.
-- `models/`: Sequelize schemas for User, Product, and Order.
 - `routes/`: API endpoint definitions.
+
+## 📊 RFQ Data Analysis (Purchase point_Analysis 1.xlsx)
+
+The `Purchase point_Analysis 1.xlsx` file serves as a comprehensive Request For Quotation (RFQ) evaluation toolkit. It tracks and analyzes supplier quotes vs comparison prices to identify savings. Here is a breakdown of its core sheets:
+
+### Key Sheets & Purpose:
+1. **RFQ-Tracking**:
+   - Acts as the main dashboard tracking the status of various RFQs (e.g., Dates, Deadlines, Status, Supplier comparisons).
+2. **Detailanalysis**:
+   - Provides granular information at the part number (P/N) and bill of material (BOM) level. 
+   - Tracks **Requested Quantities**, **Quotes by Suppliers**, **Target Price**, and calculates explicit variations: **Deviation to Comparison Price (%)** and **Deviation to Best Price (%)**.
+3. **Supplier selection**:
+   - Highlights the 1st, 2nd, and 3rd Best Price providers for specific quotes and parts. 
+   - Defines maximum achievable savings and facilitates final supplier decisions based on comparative net prices and NRE (Non-Recurring Engineering) costs.
+4. **RFQ-Input**:
+   - The primary data intake sheet capturing the raw unit prices and one-off costs from up to 4 different suppliers alongside the internal baseline (Comparison Price).
+5. **Adapter RFQ-Generator**:
+   - A mapping list of Part Numbers (e.g., `111-1`, `333-1`) used to streamline data generation.
+6. **RFQ-Supplier & DropDown**:
+   - Reference datasets containing the supplier names (`Lieferant 1`, `Lieferant 2`, etc.) and dropdown list options for dynamic data validation across the workbook.
+
+### Business Value:
+This tool aligns with the Purchase Point backend by providing robust off-platform supply chain analysis. It is designed to automatically rank suppliers and compute maximum potential savings, aiding procurement teams in making data-driven purchasing decisions.
