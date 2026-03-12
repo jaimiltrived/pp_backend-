@@ -4,9 +4,10 @@ require('dotenv').config();
 const sequelize = new Sequelize(
   process.env.DB_NAME || 'purchase_point',
   process.env.DB_USER || 'root',
-  process.env.DB_PASS !== undefined ? process.env.DB_PASS : '',
+  process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : '',
   {
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || '127.0.0.1',
+    port: process.env.DB_PORT || 3307,
     dialect: process.env.DB_DIALECT || 'mysql',
     logging: false, // Set to console.log to see SQL queries
   }
