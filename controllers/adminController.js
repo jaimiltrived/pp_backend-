@@ -24,7 +24,8 @@ exports.getUserForReview = async (req, res) => {
   try {
     const { user_id } = req.params;
 
-    const user = await User.findByPk(user_id, {
+    const user = await User.findOne({
+      where: { user_id },
       include: [
         { model: 'Organization', as: 'organization' },
         { model: 'OrganizationInfo', as: 'organizationInfo' },
@@ -50,7 +51,7 @@ exports.approveUser = async (req, res) => {
   try {
     const { user_id } = req.params;
 
-    const user = await User.findByPk(user_id);
+    const user = await User.findOne({ where: { user_id } });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -82,7 +83,7 @@ exports.rejectUser = async (req, res) => {
     const { user_id } = req.params;
     const { rejection_reason } = req.body;
 
-    const user = await User.findByPk(user_id);
+    const user = await User.findOne({ where: { user_id } });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -130,7 +131,7 @@ exports.suspendUser = async (req, res) => {
   try {
     const { user_id } = req.params;
 
-    const user = await User.findByPk(user_id);
+    const user = await User.findOne({ where: { user_id } });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
