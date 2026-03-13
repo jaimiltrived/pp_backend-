@@ -2,7 +2,6 @@
 // Supports: buyer, seller, admin
 module.exports = function(requiredRole) {
   return function(req, res, next) {
-    // Example: req.user.role is set after authentication
     const userRole = req.user && req.user.role;
     if (!userRole) return res.status(401).json({ message: 'Unauthorized' });
     

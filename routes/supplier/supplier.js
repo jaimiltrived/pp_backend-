@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const supplierController = require('../../controllers/supplier/supplierController');
+const auth = require('../../middleware/auth');
 const role = require('../../middleware/role');
 
 /**
@@ -34,7 +35,7 @@ const role = require('../../middleware/role');
  *       403:
  *         description: Forbidden - User does not have procurement role
  */
-router.post('/', role('procurement'), supplierController.addSupplier);
+router.post('/', auth, role('buyer'), supplierController.addSupplier);
 
 /**
  * @swagger
@@ -76,7 +77,7 @@ router.post('/', role('procurement'), supplierController.addSupplier);
  *       404:
  *         description: Supplier not found
  */
-router.put('/:id', role('procurement'), supplierController.editSupplier);
+router.put('/:id', auth, role('buyer'), supplierController.editSupplier);
 
 /**
  * @swagger
@@ -103,6 +104,6 @@ router.put('/:id', role('procurement'), supplierController.editSupplier);
  *       403:
  *         description: Forbidden - User does not have required role
  */
-router.get('/', role(['procurement','supplier']), supplierController.listSuppliers);
+router.get('/', auth, role(['buyer','seller']), supplierController.listSuppliers);
 
 module.exports = router;

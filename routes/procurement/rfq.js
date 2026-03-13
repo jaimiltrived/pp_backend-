@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const rfqController = require('../../controllers/procurement/rfqController');
+const auth = require('../../middleware/auth');
 const role = require('../../middleware/role');
 
 /**
@@ -32,7 +33,7 @@ const role = require('../../middleware/role');
  *       403:
  *         description: Forbidden - User does not have procurement role
  */
-router.post('/', role('procurement'), rfqController.createRFQ);
+router.post('/', auth, role('buyer'), rfqController.createRFQ);
 
 /**
  * @swagger
@@ -60,7 +61,7 @@ router.post('/', role('procurement'), rfqController.createRFQ);
  *       403:
  *         description: Forbidden
  */
-router.post('/import-bom', role('procurement'), rfqController.importBOM);
+router.post('/import-bom', auth, role('buyer'), rfqController.importBOM);
 
 /**
  * @swagger
@@ -91,7 +92,7 @@ router.post('/import-bom', role('procurement'), rfqController.importBOM);
  *       403:
  *         description: Forbidden
  */
-router.post('/assign-suppliers', role('procurement'), rfqController.assignSuppliers);
+router.post('/assign-suppliers', auth, role('buyer'), rfqController.assignSuppliers);
 
 /**
  * @swagger
@@ -118,7 +119,7 @@ router.post('/assign-suppliers', role('procurement'), rfqController.assignSuppli
  *       404:
  *         description: RFQ not found
  */
-router.get('/:id/comparison', role('procurement'), rfqController.getComparison);
+router.get('/:id/comparison', auth, role('buyer'), rfqController.getComparison);
 
 /**
  * @swagger
@@ -152,7 +153,7 @@ router.get('/:id/comparison', role('procurement'), rfqController.getComparison);
  *       403:
  *         description: Forbidden
  */
-router.put('/:id/select-supplier', role('procurement'), rfqController.selectSupplier);
+router.put('/:id/select-supplier', auth, role('buyer'), rfqController.selectSupplier);
 
 /**
  * @swagger
@@ -175,7 +176,7 @@ router.put('/:id/select-supplier', role('procurement'), rfqController.selectSupp
  *       403:
  *         description: Forbidden
  */
-router.get('/status', role('procurement'), rfqController.listByStatus);
+router.get('/status', auth, role('buyer'), rfqController.listByStatus);
 
 /**
  * @swagger
@@ -202,7 +203,7 @@ router.get('/status', role('procurement'), rfqController.listByStatus);
  *       404:
  *         description: RFQ not found
  */
-router.get('/:id', role('procurement'), rfqController.getRFQDetails);
+router.get('/:id', auth, role('buyer'), rfqController.getRFQDetails);
 
 /**
  * @swagger
@@ -229,6 +230,45 @@ router.get('/:id', role('procurement'), rfqController.getRFQDetails);
  *       403:
  *         description: Forbidden
  */
-router.get('/', role('procurement'), rfqController.listRFQs);
+router.get('/', auth, role('buyer'), rfqController.listRFQs);
+
+/**
+ * @swagger
+ * /api/procurement/rfq/dashboard/summary:
+ *   get:
+ *     tags:
+ *       - Procurement - RFQ
+ *     summary: Get dashboard summary
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard metrics retrieved successfully
+ */
+router.get('/dashboard/summary', auth, role('buyer'), rfqController.getDashboard);
+
+/**
+ * @swagger
+ * /api/procurement/rfq/savings/calculate:
+ *   post:
+ *     tags:
+ *       - Procurement - RFQ
+ *     summary: Calculate potential savings
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               rfq_id:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Savings calculated successfully
+ */
+router.post('/savings/calculate', auth, role('buyer'), rfqController.calculateSavings);
 
 module.exports = router;

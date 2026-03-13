@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const supplierRFQController = require('../../controllers/supplier/supplierRFQController');
+const auth = require('../../middleware/auth');
 const role = require('../../middleware/role');
 
 /**
@@ -19,7 +20,7 @@ const role = require('../../middleware/role');
  *       403:
  *         description: Forbidden - User does not have supplier role
  */
-router.get('/', role('supplier'), supplierRFQController.listAssignedRFQs);
+router.get('/', auth, role('seller'), supplierRFQController.listAssignedRFQs);
 
 /**
  * @swagger
@@ -46,7 +47,7 @@ router.get('/', role('supplier'), supplierRFQController.listAssignedRFQs);
  *       404:
  *         description: RFQ not found
  */
-router.get('/:id', role('supplier'), supplierRFQController.getAssignedRFQDetails);
+router.get('/:id', auth, role('seller'), supplierRFQController.getAssignedRFQDetails);
 
 /**
  * @swagger
@@ -84,7 +85,7 @@ router.get('/:id', role('supplier'), supplierRFQController.getAssignedRFQDetails
  *       403:
  *         description: Forbidden
  */
-router.post('/:id/quote', role('supplier'), supplierRFQController.submitQuotation);
+router.post('/:id/quote', auth, role('seller'), supplierRFQController.submitQuotation);
 
 /**
  * @swagger
@@ -122,6 +123,6 @@ router.post('/:id/quote', role('supplier'), supplierRFQController.submitQuotatio
  *       403:
  *         description: Forbidden
  */
-router.put('/:id/update-quote', role('supplier'), supplierRFQController.updateQuotation);
+router.put('/:id/update-quote', auth, role('seller'), supplierRFQController.updateQuotation);
 
 module.exports = router;

@@ -16,10 +16,6 @@ const options = {
       {
         url: 'http://localhost:5000',
         description: 'Development Server'
-      },
-      {
-        url: 'https://api.purchasepoint.com',
-        description: 'Production Server'
       }
     ],
     components: {
@@ -35,49 +31,91 @@ const options = {
         User: {
           type: 'object',
           properties: {
-            id: { type: 'string', description: 'User ID' },
-            email: { type: 'string', description: 'User email' },
-            password: { type: 'string', description: 'User password' },
-            role: { type: 'string', enum: ['buyer', 'seller', 'admin'], description: 'User role' },
-            createdAt: { type: 'string', format: 'date-time' },
-            updatedAt: { type: 'string', format: 'date-time' }
+            id: { type: 'integer' },
+            email: { type: 'string' },
+            role: { type: 'string', enum: ['buyer', 'seller', 'admin'] },
+            status: { type: 'string' },
+            onboarding_step: { type: 'integer' }
           }
         },
-        Product: {
+        Organization: {
           type: 'object',
           properties: {
-            id: { type: 'string', description: 'Product ID' },
-            name: { type: 'string', description: 'Product name' },
-            description: { type: 'string', description: 'Product description' },
-            price: { type: 'number', description: 'Product price' },
-            category: { type: 'string', description: 'Product category' },
-            seller_id: { type: 'string', description: 'Seller ID' },
-            createdAt: { type: 'string', format: 'date-time' },
-            updatedAt: { type: 'string', format: 'date-time' }
+            id: { type: 'integer' },
+            name: { type: 'string' },
+            address: { type: 'string' },
+            company_type: { type: 'string' }
+          }
+        },
+        OrganizationInfo: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            registration_number: { type: 'string' },
+            tax_id: { type: 'string' },
+            employee_count: { type: 'integer' }
+          }
+        },
+        PersonalInfo: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            first_name: { type: 'string' },
+            last_name: { type: 'string' },
+            job_title: { type: 'string' },
+            phone_number: { type: 'string' }
           }
         },
         RFQ: {
           type: 'object',
           properties: {
-            id: { type: 'string', description: 'RFQ ID' },
-            title: { type: 'string', description: 'RFQ title' },
-            description: { type: 'string', description: 'RFQ description' },
-            buyer_id: { type: 'string', description: 'Buyer ID' },
-            status: { type: 'string', enum: ['open', 'closed', 'awarded'], description: 'RFQ status' },
-            createdAt: { type: 'string', format: 'date-time' },
-            updatedAt: { type: 'string', format: 'date-time' }
+            id: { type: 'integer' },
+            title: { type: 'string' },
+            rfq_number: { type: 'string' },
+            status: { type: 'string', enum: ['open', 'closed', 'awarded', 'cancelled'] },
+            deadline: { type: 'string', format: 'date' }
+          }
+        },
+        RFQItem: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            name: { type: 'string' },
+            part_number: { type: 'string' },
+            quantity: { type: 'integer' },
+            target_price: { type: 'number' },
+            comparison_price: { type: 'number' },
+            bom_level: { type: 'integer' }
+          }
+        },
+        Quotation: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            unit_price: { type: 'number' },
+            nre_cost: { type: 'number' },
+            delivery_days: { type: 'integer' },
+            terms: { type: 'string' },
+            status: { type: 'string', enum: ['pending', 'accepted', 'rejected'] }
+          }
+        },
+        Product: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            name: { type: 'string' },
+            description: { type: 'string' },
+            price: { type: 'number' },
+            category: { type: 'string' }
           }
         },
         Order: {
           type: 'object',
           properties: {
-            id: { type: 'string', description: 'Order ID' },
-            buyer_id: { type: 'string', description: 'Buyer ID' },
-            seller_id: { type: 'string', description: 'Seller ID' },
-            total_amount: { type: 'number', description: 'Order total amount' },
-            status: { type: 'string', enum: ['pending', 'confirmed', 'shipped', 'delivered'], description: 'Order status' },
-            createdAt: { type: 'string', format: 'date-time' },
-            updatedAt: { type: 'string', format: 'date-time' }
+            id: { type: 'integer' },
+            totalAmount: { type: 'number' },
+            status: { type: 'string' },
+            items: { type: 'array', items: { type: 'object' } }
           }
         },
         Error: {
@@ -91,7 +129,7 @@ const options = {
     },
     security: [{ bearerAuth: [] }]
   },
-  apis: [] // No JSDoc comments - documentation is defined above
+  apis: ['./routes/*.js', './routes/**/*.js']
 };
 
 const swaggerSpec = swaggerJsdoc(options);

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const dropdownController = require('../../controllers/procurement/dropdownController');
+const auth = require('../../middleware/auth');
 const role = require('../../middleware/role');
 
 /**
@@ -19,6 +20,6 @@ const role = require('../../middleware/role');
  *       403:
  *         description: Forbidden - User does not have required role
  */
-router.get('/rfq-numbers', role(['procurement','supplier']), dropdownController.getRFQNumbers);
+router.get('/rfq-numbers', auth, role(['buyer','seller']), dropdownController.getRFQNumbers);
 
 module.exports = router;

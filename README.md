@@ -1,104 +1,169 @@
+# Purchase Point Platform
 
+Purchase Point is a robust B2B e-commerce and procurement platform designed to streamline the Request for Quotation (RFQ) process, manage supplier relationships, and provide deep financial analysis for industrial procurement.
 
-# Purchase Point Backend
+---
 
-This is a Node.js and Express-based backend API for the "Purchase Point" project, originally migrated from MongoDB to MySQL using Sequelize ORM. It features user authentication, product management, and order processing.
+## 📋 Basic Project Details
+- **Version**: 1.0.0
+- **Status**: Stable / Development
+- **Main Entry**: `index.js`
+- **Default Port**: `5000`
+- **Database**: MySQL (via Sequelize)
 
-## 🚀 Features
+## 🛠 Prerequisites
+Before setting up the project, ensure you have the following installed:
+- **Node.js**: v16.x or higher
+- **npm**: v8.x or higher
+- **MySQL Server**: v8.0 or higher (Running on port 3307 or 3306)
 
-- **User Authentication**: Secure signup and login with hashed passwords (bcryptjs) and JWT tokens.
-- **Product Management**: Full CRUD operations for products, including inventory tracking.
-- **Order Processing**: Automated order creation with total calculation and real-time stock updates.
-- **MySQL Database**: Robust data storage using Sequelize ORM.
-- **Automated DB Setup**: Custom script to initialize the database without manual SQL commands.
+## ⚡ Quick Start
+1. `npm install`
+2. Configure `.env` with your DB credentials.
+3. `node index.js` (Server will start and sync tables).
+4. `node test-full-workflow.js` (Run automated end-to-end test).
 
-## 📋 Prerequisites
+---
 
-- [Node.js](https://nodejs.org/) (v16+)
-- [MySQL Server](https://www.mysql.com/) (Ensure it is running)
+## 🔄 Step-by-Step Business Workflow
 
-## 🛠️ Setup Instructions
+### Step 1: User Onboarding & Identity
+- **Signup**: Users register with email and password.
+- **Role Selection**: User chooses to be a `Buyer` or `Seller`.
+- **OTP Verification**: A 6-digit code is sent to the email to verify identity.
+- **Organization Setup**: User provides company details, tax IDs, and industry codes.
+- **Approval**: New accounts enter a `pending_approval` state until an Admin reviews and activates them.
 
-### 1. Install Dependencies
+### Step 2: RFQ Creation (Buyer)
+- **Initiation**: An approved Buyer creates a Request for Quotation (RFQ) with items, quantities, and deadlines.
+- **Analysis Baseline**: Buyer sets `Comparison Price` and `Target Price` for each item to drive future analysis.
+- **Assignment**: Buyer can assign specific approved Sellers to participate in the RFQ.
+
+### Step 3: Quotation Submission (Seller)
+- **Review**: Approved Sellers see RFQs they are invited to or that are marked as open.
+- **Bidding**: Sellers submit `Unit Price`, `NRE Costs`, and `Delivery Lead Times`.
+- **Revisions**: Sellers can update their quotes until the RFQ is closed or awarded.
+
+### Step 4: Analysis & Selection (Buyer)
+- **Comparison View**: Buyer uses the Analysis Dashboard to see all bids side-by-side.
+- **Automated Math**: The system highlights the **Best Price** and calculates the **Percentage Deviation** from the budget.
+- **Awarding**: Buyer selects the winning bid, which automatically updates the RFQ status to `Awarded` and notifies the Seller.
+
+### Step 5: Order & Marketplace
+- **Order Placement**: Awarded RFQs can be converted into Orders.
+- **Status Tracking**: Orders move from `Pending` -> `Confirmed` -> `Shipped` -> `Delivered`.
+- **Product Search**: Users can explore general marketplace products using AI-powered semantic search.
+
+---
+
+## 🚀 Key Features
+
+### 1. Advanced Onboarding System
+- **Multi-step Registration**: Secure onboarding for Buyers, Sellers, and Admins.
+- **Identity Verification**: OTP-based email verification and organization validation.
+- **Profile Management**: Detailed tracking of personal and company information.
+
+### 2. Strategic Procurement (RFQ)
+- **RFQ Lifecycle**: Create, track, and award RFQs with full status management.
+- **BOM Management**: Import Bill of Materials and link them to RFQ items.
+- **Supplier Matching**: Assign specific suppliers to RFQs for targeted bidding.
+
+### 3. Deep Financial Analysis
+- **Price Comparison**: Automatic calculation of best prices across all supplier quotes.
+- **Deviation Tracking**: Real-time analysis of price variances against target and comparison baselines.
+- **Savings Dashboard**: Global view of potential and realized savings across procurement activities.
+
+### 4. Marketplace & Orders
+- **AI-Powered Search**: Semantic search capabilities for product discovery.
+- **Order Management**: End-to-end tracking from pending to delivered status.
+- **Product Catalog**: Multi-category product management for sellers.
+
+### 5. Admin Governance
+- **User Review**: Centralized dashboard for approving or rejecting new business participants.
+- **Account Security**: Suspend or reactivate accounts based on compliance.
+
+---
+
+## 🛠 Tech Stack
+
+- **Backend**: Node.js, Express.js
+- **Database**: MySQL with Sequelize ORM
+- **Authentication**: JSON Web Tokens (JWT) & BcryptJS
+- **Documentation**: Swagger UI (OpenAPI 3.0)
+- **Testing**: Automated Workflow Testing with Axios
+
+---
+
+## 📦 Installation & Setup
+
+### 1. Clone & Install
 ```bash
+git clone <repository-url>
+cd "Purchase point"
 npm install
 ```
 
-### 2. Configure Environment Variables
-Create a [.env](file:///c:/Users/ADMIN/Downloads/Purchase%20point/Purchase-point/.env) file in the root directory (one has been created for you):
+### 2. Environment Configuration
+Create a `.env` file in the root directory:
 ```env
-PORT=5000
-JWT_SECRET=your_jwt_secret_key
-
-# Database Configuration
 DB_HOST=127.0.0.1
+DB_PORT=3307
 DB_USER=root
-DB_PASS=password
+DB_PASSWORD=your_password
 DB_NAME=purchase_point
 DB_DIALECT=mysql
+JWT_SECRET=04f058abc86f6e6c016b595d68a1ec8f76609f81e931148e91240c46da68d10f
+PORT=5000
 ```
 
 ### 3. Initialize Database
-Run the automated script to create the database schema:
-```bash
-node init-db.js
-```
-
-### 4. Start the Server
+Ensure your MySQL server is running, then start the application to sync tables:
 ```bash
 node index.js
 ```
-The server will be running at `http://localhost:5000`.
 
-## 📡 API Endpoints
-
-### Auth
-- `POST /api/auth/signup`: Create a new user account.
-- `POST /api/auth/login`: Authenticate and receive a JWT token.
-
-### Products
-- `GET /api/products`: Retrieve all products.
-- `GET /api/products/:id`: Get a specific product by ID.
-- `POST /api/products`: Create a new product (Requires Auth).
-- `PUT /api/products/:id`: Update an existing product (Requires Auth).
-- `DELETE /api/products/:id`: Remove a product (Requires Auth).
-
-### Orders
-- `POST /api/orders`: Place a new order (Requires Auth).
-- `GET /api/orders`: View user order history (Requires Auth).
-- `GET /api/orders/:id`: Get details of a specific order (Requires Auth).
-
-## 🧪 Testing
-I have provided a test script to verify the core API flow:
+### 4. Seed Data (Optional)
 ```bash
-node test-mysql.js
+node seed-industries.js
 ```
 
-## 📁 Project Structure
-- `config/`: Database configuration and connection.
-- `controllers/`: Business logic for handling requests.
-- `middleware/`: Authentication and other security checks.
-- `routes/`: API endpoint definitions.
+---
 
-## 📊 RFQ Data Analysis (Purchase point_Analysis 1.xlsx)
+## 📖 API Documentation
 
-The `Purchase point_Analysis 1.xlsx` file serves as a comprehensive Request For Quotation (RFQ) evaluation toolkit. It tracks and analyzes supplier quotes vs comparison prices to identify savings. Here is a breakdown of its core sheets:
+The platform features comprehensive interactive documentation.
 
-### Key Sheets & Purpose:
-1. **RFQ-Tracking**:
-   - Acts as the main dashboard tracking the status of various RFQs (e.g., Dates, Deadlines, Status, Supplier comparisons).
-2. **Detailanalysis**:
-   - Provides granular information at the part number (P/N) and bill of material (BOM) level. 
-   - Tracks **Requested Quantities**, **Quotes by Suppliers**, **Target Price**, and calculates explicit variations: **Deviation to Comparison Price (%)** and **Deviation to Best Price (%)**.
-3. **Supplier selection**:
-   - Highlights the 1st, 2nd, and 3rd Best Price providers for specific quotes and parts. 
-   - Defines maximum achievable savings and facilitates final supplier decisions based on comparative net prices and NRE (Non-Recurring Engineering) costs.
-4. **RFQ-Input**:
-   - The primary data intake sheet capturing the raw unit prices and one-off costs from up to 4 different suppliers alongside the internal baseline (Comparison Price).
-5. **Adapter RFQ-Generator**:
-   - A mapping list of Part Numbers (e.g., `111-1`, `333-1`) used to streamline data generation.
-6. **RFQ-Supplier & DropDown**:
-   - Reference datasets containing the supplier names (`Lieferant 1`, `Lieferant 2`, etc.) and dropdown list options for dynamic data validation across the workbook.
+- **Swagger UI**: [http://localhost:5000/api-docs](http://localhost:5000/api-docs)
+- **Specifications**: [http://localhost:5000/swagger.json](http://localhost:5000/swagger.json)
 
-### Business Value:
-This tool aligns with the Purchase Point backend by providing robust off-platform supply chain analysis. It is designed to automatically rank suppliers and compute maximum potential savings, aiding procurement teams in making data-driven purchasing decisions.
+---
+
+## 🧪 Testing the System
+
+To verify the complete business workflow (Signup -> Approval -> RFQ -> Quote -> Award), run:
+```bash
+node test-full-workflow.js
+```
+
+This script automates:
+1. Creating Admin, Buyer, and Seller accounts.
+2. Admin approval of participants.
+3. Buyer creating an RFQ.
+4. Seller submitting a quotation.
+5. Buyer awarding the contract based on analysis.
+
+---
+
+## 📂 Project Structure
+
+- `/models`: Sequelize database schemas.
+- `/controllers`: Business logic for RFQs, Auth, and Analysis.
+- `/routes`: API endpoint definitions organized by role (Buyer, Seller, Admin).
+- `/middleware`: Authentication and Role-Based Access Control (RBAC).
+- `index.js`: Main entry point.
+- `swagger.js`: Documentation configuration.
+
+---
+
+## 🤝 Support
+For any issues or questions, contact [support@purchasepoint.com](mailto:support@purchasepoint.com).
