@@ -127,6 +127,14 @@ node index.js
 node seed-industries.js
 ```
 
+### 🗄️ Database Backup
+A complete SQL export of the database schema and structure is included for manual import:
+- **File**: `purchase_point.sql`
+- **Instructions**: You can import this file using MySQL Workbench, phpMyAdmin, or the command line:
+  ```bash
+  mysql -u root -p purchase_point < purchase_point.sql
+  ```
+
 ---
 
 ## 📖 API Documentation
