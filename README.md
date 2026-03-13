@@ -9,6 +9,7 @@ Purchase Point is a robust B2B e-commerce and procurement platform designed to s
 - **Status**: Stable / Development
 - **Main Entry**: `index.js`
 - **Default Port**: `5000`
+- **Active Endpoints**: 73 (Fully Documented)
 - **Database**: MySQL (via Sequelize)
 
 ## 🛠 Prerequisites
