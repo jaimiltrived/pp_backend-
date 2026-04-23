@@ -5,11 +5,25 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
 const db = require('./config/db');
 
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
 const app = express();
 
-// Middleware
+// Security Middleware
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+
+// Apply rate limiter to all routes
+app.use('/api/', limiter);
 
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

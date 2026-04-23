@@ -22,6 +22,7 @@ const role = require('../middleware/role');
  *       403:
  *         description: Forbidden - User is not an admin
  */
+router.get('/stats', auth, role('admin'), adminController.getDashboardStats);
 router.get('/pending-users', auth, role('admin'), adminController.getPendingUsers);
 
 /**
@@ -185,5 +186,25 @@ router.put('/user/:user_id/reject', auth, role('admin'), adminController.rejectU
  *         description: User not found
  */
 router.put('/user/:user_id/suspend', auth, role('admin'), adminController.suspendUser);
+router.delete('/user/:user_id', auth, role('admin'), adminController.deleteUser);
+
+router.get('/orders', auth, role('admin'), adminController.getAllOrders);
+router.put('/order/:id', auth, role('admin'), adminController.updateOrder);
+router.delete('/order/:id', auth, role('admin'), adminController.deleteOrder);
+
+router.get('/rfqs', auth, role('admin'), adminController.getAllRFQs);
+router.post('/rfq', auth, role('admin'), adminController.createRFQ);
+router.put('/rfq/:id', auth, role('admin'), adminController.updateRFQ);
+router.delete('/rfq/:id', auth, role('admin'), adminController.deleteRFQ);
+
+router.delete('/product/:id', auth, role('admin'), adminController.deleteProduct);
+
+router.get('/quotations', auth, role('admin'), adminController.getAllQuotations);
+router.put('/quotation/:id', auth, role('admin'), adminController.updateQuotation);
+
+router.get('/messages', auth, role('admin'), adminController.getAllMessages);
+router.delete('/message/:id', auth, role('admin'), adminController.deleteMessage);
+
+router.get('/analytics', auth, role('admin'), adminController.getAnalytics);
 
 module.exports = router;

@@ -78,7 +78,10 @@ exports.loginWithPassword = async (req, res) => {
       });
     }
 
-    if (user.account_status === 'pending_approval') {
+    // IMPORTANT: Only block pending_approval if they have actually finished onboarding
+    // For Sellers, onboarding_step 8 means finished.
+    // For Buyers, they might stay at step 1 but should be active.
+    if (user.account_status === 'pending_approval' && (user.onboarding_step === 8 || (user.role === 'buyer' && user.status === 'role_selected'))) {
       return res.status(403).json({ 
         error: 'Account pending approval',
         message: 'Your account is awaiting admin approval',
@@ -95,6 +98,14 @@ exports.loginWithPassword = async (req, res) => {
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
     // Check onboarding status
+    // If buyer and just registered, they are "active" for now (or need minimal onboarding)
+    if (user.role === 'buyer' && (user.status === 'registered' || user.status === 'role_selected')) {
+       // Auto-activate buyers for now, or you can keep them in a specific state
+       user.status = 'active';
+       user.account_status = 'active';
+       await user.save();
+    }
+
     if (user.status !== 'active') {
       return res.json({
         message: 'Onboarding required',
@@ -116,12 +127,21 @@ exports.loginWithPassword = async (req, res) => {
   }
 };
 
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 // LOGIN FLOW - STEP 3: Social login (Google)
 exports.googleLogin = async (req, res) => {
   try {
-    const { id_token, email, name, picture } = req.body;
-    
-    // TODO: Verify id_token with Google API
+    const { id_token } = req.body;
+
+    // Verify token
+    const ticket = await googleClient.verifyIdToken({
+        idToken: id_token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
     
     let user = await User.findOne({ where: { email } });
 
@@ -335,7 +355,7 @@ exports.forgotPassword = async (req, res) => {
     });
 
     // Send email
-    await EmailService.sendOTP(user.email, otp);
+    await EmailService.sendOTP(user.email, otp, 'password_reset');
 
     res.json({ message: 'Reset OTP sent to email', action: 'enter_reset_otp' });
   } catch (error) {

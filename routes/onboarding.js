@@ -247,4 +247,7 @@ router.post('/select-industry', onboardingController.selectIndustry);
  */
 router.post('/payment-method', onboardingController.storePaymentMethod);
 
+router.get('/status/:user_id', onboardingController.getOnboardingStatus);
+router.post('/complete', onboardingController.completeOnboarding);
+
 module.exports = router;

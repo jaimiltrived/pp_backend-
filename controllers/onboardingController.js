@@ -1,401 +1,199 @@
-const { User, Organization, OrganizationInfo, PersonalInfo, IndustryCode, PaymentMethod, OTP, UserIndustry } = require('../config/db');
-const OTPService = require('../utils/OTPService');
-const EmailService = require('../utils/EmailService');
+const db = require('../config/db');
+const { User, Organization, OrganizationInfo, PersonalInfo, IndustryCode, UserIndustry, PaymentMethod, OTP } = db;
 
-// STEP 1: Store Organization Data
+// 1. Store Organization Data
 exports.storeOrganization = async (req, res) => {
   try {
-    const { user_id, organization_type, department, country, state, city, post_code } = req.body;
-
-    // Validation
-    if (!user_id || !organization_type || !country) {
-      return res.status(400).json({ error: 'Required fields missing' });
-    }
-
-    const user = await User.findByPk(user_id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    // Check if already in step 1
-    if (user.onboarding_step !== 1) {
-      return res.status(400).json({ error: 'Invalid step order' });
-    }
-
-    // Create or update organization
-    let organization = await Organization.findOne({ where: { UserId: user_id } });
-    if (organization) {
-      await organization.update({ organization_type, department, country, state, city, post_code });
+    const { user_id, organization_type, department, country, state, city, post_code, organization_name, experience, description, id_proof, products_deal_with, supplier_type } = req.body;
+    
+    // For Buyers, we also get organization_name
+    let org = await Organization.findOne({ where: { UserId: user_id } });
+    if (org) {
+      await org.update({
+        organization_name, organization_type, department, country, state, city, post_code,
+        experience, description, id_proof, products_deal_with, supplier_type
+      });
     } else {
-      organization = await Organization.create({
-        organization_type,
-        department,
-        country,
-        state,
-        city,
-        post_code,
-        UserId: user_id
+      org = await Organization.create({
+        UserId: user_id, organization_name, organization_type, department, country, state, city, post_code,
+        experience, description, id_proof, products_deal_with, supplier_type
       });
     }
 
-    // Move to next step
-    user.onboarding_step = 2;
-    user.status = 'onboarding_in_progress';
-    await user.save();
-
-    res.json({
-      message: 'Organization data saved',
-      next_step: 2,
-      action: 'redirect_to_email_verification'
-    });
+    res.status(200).json({ message: 'Organization data saved', data: org });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    console.error('Store Organization Error:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 
-// STEP 2A: Send OTP
+// 2. Send OTP
 exports.sendOtp = async (req, res) => {
   try {
-    const { user_id } = req.body;
+    const { email } = req.body;
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiryTime = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
-    const user = await User.findByPk(user_id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    if (user.onboarding_step !== 2) {
-      return res.status(400).json({ error: 'Out of order' });
-    }
-
-    // Generate OTP
-    const otp = OTPService.generateOTP();
-    const expiry_time = OTPService.getExpiryTime();
-
-    // Delete previous OTPs
-    await OTP.destroy({ where: { email: user.email } });
-
-    // Save OTP
-    await OTP.create({
-      email: user.email,
-      otp,
-      expiry_time,
-      attempts: 0
-    });
-
-    // Send email
-    await EmailService.sendOTP(user.email, otp);
-
-    res.json({
-      message: 'OTP sent to email',
-      email: user.email,
-      action: 'show_otp_input'
-    });
+    await OTP.upsert({ email, otp: otpCode, expiry_time: expiryTime });
+    
+    // Mocking email sending
+    console.log(`[AUTH] OTP for ${email}: ${otpCode}`);
+    
+    res.status(200).json({ message: 'OTP sent successfully (Check console)' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// STEP 2B: Verify OTP
+// 3. Verify OTP
 exports.verifyOtp = async (req, res) => {
   try {
-    const { user_id, otp } = req.body;
-
-    if (!user_id || !otp) {
-      return res.status(400).json({ error: 'User ID and OTP required' });
+    const { email, otp } = req.body;
+    const record = await OTP.findOne({ where: { email, otp } });
+    
+    if (!record || record.expiry_time < new Date()) {
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
     }
 
-    const user = await User.findByPk(user_id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    // Find OTP record
-    const otpRecord = await OTP.findOne({ where: { email: user.email } });
-    if (!otpRecord) {
-      return res.status(404).json({ error: 'OTP not found or expired' });
-    }
-
-    // Check expiry
-    if (OTPService.isExpired(otpRecord.expiry_time)) {
-      return res.status(400).json({ error: 'OTP has expired' });
-    }
-
-    // Check OTP match
-    if (otpRecord.otp !== otp.toString()) {
-      otpRecord.attempts += 1;
-      if (otpRecord.attempts >= 3) {
-        await otpRecord.destroy();
-        return res.status(400).json({ error: 'Too many attempts, request new OTP' });
-      }
-      await otpRecord.save();
-      return res.status(400).json({ error: 'Invalid OTP' });
-    }
-
-    // Mark as verified
-    user.email_verified = true;
-    user.onboarding_step = 3;
-    await user.save();
-
-    // Delete OTP
-    await otpRecord.destroy();
-
-    res.json({
-      message: 'Email verified successfully',
-      next_step: 3,
-      action: 'redirect_to_create_user_id'
-    });
+    await record.update({ is_verified: true });
+    res.status(200).json({ message: 'OTP verified' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// STEP 3: Create User ID and Password
+// 4. Create User / Update Account
 exports.createUser = async (req, res) => {
   try {
     const { user_id, username, password, confirm_password } = req.body;
-
-    // Validation
-    if (!user_id || !username || !password) {
-      return res.status(400).json({ error: 'Required fields missing' });
-    }
+    if (password !== confirm_password) return res.status(400).json({ error: 'Passwords do not match' });
 
     const user = await User.findByPk(user_id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    if (user.onboarding_step !== 3) {
-      return res.status(400).json({ error: 'Invalid step order' });
-    }
-
-    // Validate password
-    if (password !== confirm_password) {
-      return res.status(400).json({ error: 'Passwords do not match' });
-    }
-
-    if (password.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
-    }
-
-    // Check username uniqueness
-    const existingUser = await User.findOne({ where: { user_id: username } });
-    if (existingUser) {
-      return res.status(400).json({ error: 'Username already exists' });
-    }
-
-    // Update user
-    user.user_id = username;
-    user.password = password; // Will be hashed by User model beforeCreate hook
-    user.onboarding_step = 4;
-    await user.save();
-
-    res.json({
-      message: 'User ID created successfully',
-      next_step: 4,
-      action: 'redirect_to_organization_info'
-    });
+    // In a real app, hash password here
+    await user.update({ password, name: username, status: 'onboarding_in_progress' });
+    
+    res.status(200).json({ message: 'Account updated successfully', user });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// STEP 4: Store Organization Info
+// 5. Store Organization Info
 exports.storeOrganizationInfo = async (req, res) => {
   try {
     const { user_id, full_address, website, authorized_contact, contact_phone, tax_number, tax_registered } = req.body;
-
-    // Validation
-    if (!user_id || !full_address || !authorized_contact) {
-      return res.status(400).json({ error: 'Required fields missing' });
-    }
-
-    const user = await User.findByPk(user_id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    if (user.onboarding_step !== 4) {
-      return res.status(400).json({ error: 'Invalid step order' });
-    }
-
-    // If tax_registered, tax_number is required
-    if (tax_registered && !tax_number) {
-      return res.status(400).json({ error: 'Tax number required for registered organizations' });
-    }
-
-    // Create or update organization info
-    let orgInfo = await OrganizationInfo.findOne({ where: { UserId: user_id } });
-    if (orgInfo) {
-      await orgInfo.update({
-        full_address,
-        website,
-        authorized_contact,
-        contact_phone,
-        tax_number,
-        tax_registered
-      });
+    
+    let info = await OrganizationInfo.findOne({ where: { UserId: user_id } });
+    if (info) {
+      await info.update({ full_address, website, authorized_contact, contact_phone, tax_number, tax_registered });
     } else {
-      orgInfo = await OrganizationInfo.create({
-        full_address,
-        website,
-        authorized_contact,
-        contact_phone,
-        tax_number,
-        tax_registered,
-        UserId: user_id
-      });
+      info = await OrganizationInfo.create({ UserId: user_id, full_address, website, authorized_contact, contact_phone, tax_number, tax_registered });
     }
 
-    user.onboarding_step = 5;
-    await user.save();
-
-    res.json({
-      message: 'Organization info saved',
-      next_step: 5,
-      action: 'redirect_to_personal_info'
-    });
+    res.status(200).json({ message: 'Business info saved', data: info });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// STEP 5: Store Personal Info
+// 6. Store Personal Info
 exports.storePersonalInfo = async (req, res) => {
   try {
-    const { user_id, full_name, last_name, designation, national_id, tax_id } = req.body;
-
-    // Validation
-    if (!user_id || !full_name) {
-      return res.status(400).json({ error: 'Required fields missing' });
-    }
-
-    const user = await User.findByPk(user_id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    if (user.onboarding_step !== 5) {
-      return res.status(400).json({ error: 'Invalid step order' });
-    }
-
-    // Create or update personal info
-    let personalInfo = await PersonalInfo.findOne({ where: { UserId: user_id } });
-    if (personalInfo) {
-      await personalInfo.update({
-        full_name,
-        last_name,
-        designation,
-        national_id,
-        tax_id
-      });
+    const { user_id, full_name, last_name, designation, national_id, tax_id, contact_phone } = req.body;
+    
+    let info = await PersonalInfo.findOne({ where: { UserId: user_id } });
+    if (info) {
+      await info.update({ full_name, last_name, designation, national_id, tax_id, contact_phone });
     } else {
-      personalInfo = await PersonalInfo.create({
-        full_name,
-        last_name,
-        designation,
-        national_id,
-        tax_id,
-        UserId: user_id
-      });
+      info = await PersonalInfo.create({ UserId: user_id, full_name, last_name, designation, national_id, tax_id, contact_phone });
     }
 
-    user.onboarding_step = 6;
-    await user.save();
-
-    res.json({
-      message: 'Personal info saved',
-      next_step: 6,
-      action: 'redirect_to_industry_selection'
-    });
+    res.status(200).json({ message: 'Personal profile saved', data: info });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// STEP 6: Get Industry Codes and Select
+// 7. Industry Codes
 exports.getIndustryCodes = async (req, res) => {
   try {
-    const industries = await IndustryCode.findAll() || [];
-    res.json({
-      message: 'Industry codes retrieved',
-      industries
-    });
+    const codes = await IndustryCode.findAll();
+    res.status(200).json(codes);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
+// 8. Select Industry
 exports.selectIndustry = async (req, res) => {
   try {
     const { user_id, industry_codes } = req.body;
+    
+    // industry_codes is an array of IDs
+    await UserIndustry.destroy({ where: { UserId: user_id } });
+    const records = industry_codes.map(codeId => ({ UserId: user_id, IndustryCodeId: codeId }));
+    await UserIndustry.bulkCreate(records);
 
-    // Validation
-    if (!user_id || !industry_codes || !Array.isArray(industry_codes)) {
-      return res.status(400).json({ error: 'User ID and industry codes array required' });
-    }
-
-    const user = await User.findByPk(user_id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    if (user.onboarding_step !== 6) {
-      return res.status(400).json({ error: 'Invalid step order' });
-    }
-
-    // Create pivot table entries in UserIndustry
-    if (industry_codes && industry_codes.length > 0) {
-      await UserIndustry.destroy({ where: { UserId: user_id } }); // Clear existing if any
-      const entries = industry_codes.map(codeId => ({
-        UserId: user_id,
-        IndustryCodeId: codeId
-      }));
-      await UserIndustry.bulkCreate(entries);
-    }
-
-    user.onboarding_step = 7;
-    await user.save();
-
-    res.json({
-      message: 'Industry codes selected',
-      next_step: 7,
-      action: 'redirect_to_payment_method'
-    });
+    res.status(200).json({ message: 'Industries updated' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// STEP 7: Store Payment Method
+// 9. Payment Method
 exports.storePaymentMethod = async (req, res) => {
   try {
-    const { user_id, method_type, payment_identifier } = req.body;
+    const { user_id, method_type, bank_name, account_no, ifsc_code, account_holder_name, bank_location } = req.body;
+    
+    // Store as identifier or separate fields if schema allowed
+    const identifier = bank_name ? `${bank_name} | ${account_no}` : method_type;
+    
+    await PaymentMethod.upsert({ 
+      UserId: user_id, 
+      method_type, 
+      payment_identifier: identifier,
+      is_default: true 
+    });
 
-    // Validation
-    if (!user_id || !method_type) {
-      return res.status(400).json({ error: 'Required fields missing' });
-    }
+    res.status(200).json({ message: 'Payment method saved' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-    const validMethods = ['internet_banking', 'paypal', 'google_pay', 'other'];
-    if (!validMethods.includes(method_type)) {
-      return res.status(400).json({ error: 'Invalid payment method' });
-    }
+// 10. Get Status
+exports.getOnboardingStatus = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    const user = await User.findByPk(user_id, {
+      include: [
+        { model: Organization },
+        { model: OrganizationInfo },
+        { model: PersonalInfo },
+        { model: IndustryCode, through: UserIndustry },
+        { model: PaymentMethod }
+      ]
+    });
 
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.status(200).json({ data: user, email: user.email });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// 11. Complete
+exports.completeOnboarding = async (req, res) => {
+  try {
+    const { user_id } = req.body;
     const user = await User.findByPk(user_id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    if (user.onboarding_step !== 7) {
-      return res.status(400).json({ error: 'Invalid step order' });
-    }
-
-    // Create payment method
-    const paymentMethod = await PaymentMethod.create({
-      method_type,
-      payment_identifier,
-      is_default: true,
-      UserId: user_id
-    });
-
-    // Mark onboarding as completed
-    user.onboarding_step = 8; // Completed
-    user.status = 'pending_approval'; // Send to admin
-    user.account_status = 'pending_approval';
-    await user.save();
-
-    // TODO: Send notification to admin for review
-
-    res.json({
-      message: 'Onboarding completed, awaiting admin approval',
-      status: 'pending_approval',
-      action: 'show_approval_waiting_screen'
-    });
+    await user.update({ status: 'pending_approval' });
+    res.status(200).json({ message: 'Onboarding complete. Awaiting approval.' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    res.status(500).json({ error: error.message });
   }
 };

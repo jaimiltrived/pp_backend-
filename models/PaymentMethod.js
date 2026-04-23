@@ -12,6 +12,26 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    bank_name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    account_no: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    ifsc_code: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    account_holder_name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    bank_location: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   });
 
   return PaymentMethod;
