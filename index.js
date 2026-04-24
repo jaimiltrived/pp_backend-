@@ -30,6 +30,10 @@ const limiter = rateLimit({
 // Apply rate limiter to all routes
 app.use('/api/', limiter);
 
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', version: '1.0.3-reinforced-jwt', time: new Date().toISOString() });
+});
+
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
