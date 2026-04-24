@@ -203,6 +203,7 @@ router.get('/quotations', auth, role('admin'), adminController.getAllQuotations)
 router.put('/quotation/:id', auth, role('admin'), adminController.updateQuotation);
 
 router.get('/messages', auth, role('admin'), adminController.getAllMessages);
+router.get('/inbox', auth, role('admin'), adminController.getAllMessages);
 router.delete('/message/:id', auth, role('admin'), adminController.deleteMessage);
 
 router.get('/analytics', auth, role('admin'), adminController.getAnalytics);

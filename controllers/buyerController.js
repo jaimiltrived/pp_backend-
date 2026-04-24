@@ -1,4 +1,4 @@
-const { User, RFQ, RFQItem, Quotation, Order, Organization, PersonalInfo, sequelize } = require('../config/db');
+const { User, RFQ, RFQItem, Quotation, Order, Organization, PersonalInfo, sequelize, Message } = require('../config/db');
 const { Op } = require('sequelize');
 
 // Buyer Dashboard
@@ -299,3 +299,15 @@ exports.getBuyerEvents = async (req, res) => {
   }
 };
 
+exports.getInbox = async (req, res) => {
+  try {
+    const messages = await Message.findAll({
+      where: { receiver_id: req.user.id },
+      order: [['createdAt', 'DESC']],
+      limit: 20
+    });
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
