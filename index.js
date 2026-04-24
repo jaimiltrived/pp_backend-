@@ -49,8 +49,8 @@ app.use('/api/seller', require('./routes/seller'));
 app.use('/api/admin', require('./routes/admin'));
 
 // Database Connection
-db.sequelize.sync({ alter: true })
-  .then(() => console.log('MySQL Connected and Tables Altered'))
+db.sequelize.sync()
+  .then(() => console.log('MySQL Connected Successfully'))
   .catch(err => console.error('MySQL Connection Error:', err));
 
 const PORT = process.env.PORT || 5000;
