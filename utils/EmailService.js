@@ -3,21 +3,21 @@ require('dotenv').config();
 
 // Create a transporter using environment variables
 const createTransporter = () => {
-  // If SMTP settings are provided in .env, use them
-  if (process.env.SMTP_HOST && process.env.SMTP_USER) {
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT || 587,
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-  }
-  
-  // Otherwise, default to a stub mode (logging only)
-  return null;
+  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const smtpUser = process.env.SMTP_USER || 'jeniliinnovation812@gmail.com';
+  const smtpPass = process.env.SMTP_PASS || 'wjow aggr nfvt ykmj';
+  const smtpPort = process.env.SMTP_PORT || 587;
+  const smtpSecure = process.env.SMTP_SECURE === 'true' ? true : false;
+
+  return nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpSecure,
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+  });
 };
 
 class EmailService {
@@ -47,16 +47,8 @@ class EmailService {
         `
       };
 
-      if (transporter) {
-        await transporter.sendMail(mailOptions);
-        console.log(`Success: ${type} email sent to ${email}`);
-      } else {
-        console.log(`--- EMAIL STUB (${type.toUpperCase()}) ---`);
-        console.log(`To: ${email}`);
-        console.log(`Subject: ${mailOptions.subject}`);
-        console.log(`OTP: ${otp}`);
-        console.log('---------------------------');
-      }
+      await transporter.sendMail(mailOptions);
+      console.log(`Success: ${type} email sent to ${email}`);
       return true;
     } catch (error) {
       console.error('Email service error:', error);
