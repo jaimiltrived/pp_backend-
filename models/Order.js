@@ -9,8 +9,15 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'pending',
     },
     items: {
-      type: DataTypes.JSON,
+      type: DataTypes.TEXT('long'),
       allowNull: false,
+      get() {
+        const value = this.getDataValue('items');
+        try { return typeof value === 'string' ? JSON.parse(value) : value; } catch (e) { return value; }
+      },
+      set(value) {
+        this.setDataValue('items', typeof value === 'object' ? JSON.stringify(value) : value);
+      }
     },
   });
   return Order;
