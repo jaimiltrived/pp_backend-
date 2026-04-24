@@ -2,12 +2,12 @@ const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME || process.env.MYSQLDATABASE || 'purchase_point',
-  process.env.DB_USER || process.env.MYSQLUSER || 'root',
-  process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : (process.env.MYSQLPASSWORD || ''),
+  process.env.DB_NAME || process.env.MYSQLDATABASE || 'sql12824282',
+  process.env.DB_USER || process.env.MYSQLUSER || 'sql12824282',
+  process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : (process.env.MYSQLPASSWORD || 'sdztZegsna'),
   {
-    host: process.env.DB_HOST || process.env.MYSQLHOST || '127.0.0.1',
-    port: process.env.DB_PORT || process.env.MYSQLPORT || 3307,
+    host: process.env.DB_HOST || process.env.MYSQLHOST || 'sql12.freesqldatabase.com',
+    port: process.env.DB_PORT || process.env.MYSQLPORT || 3306,
     dialect: process.env.DB_DIALECT || 'mysql',
     logging: false,
   }
