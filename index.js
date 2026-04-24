@@ -1,4 +1,9 @@
 require('dotenv').config();
+
+// Fallback secrets (used when environment variables are not set, e.g. on Render)
+if (!process.env.JWT_SECRET) process.env.JWT_SECRET = '04f058abc86f6e6c016b595d68a1ec8f76609f81e931148e91240c46da68d10f';
+if (!process.env.GOOGLE_CLIENT_ID) process.env.GOOGLE_CLIENT_ID = '602850848367-tssnldslujlhkkei23iedefmp6pjvstk.apps.googleusercontent.com';
+
 const express = require('express');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
