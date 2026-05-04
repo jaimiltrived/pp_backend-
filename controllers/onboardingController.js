@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const { User, Organization, OrganizationInfo, PersonalInfo, IndustryCode, UserIndustry, PaymentMethod, OTP } = db;
+const EmailService = require('../utils/EmailService');
 
 // 1. Store Organization Data
 exports.storeOrganization = async (req, res) => {
@@ -36,10 +37,15 @@ exports.sendOtp = async (req, res) => {
 
     await OTP.upsert({ email, otp: otpCode, expiry_time: expiryTime });
     
-    // Mocking email sending
+    // Send real email
     console.log(`[AUTH] OTP for ${email}: ${otpCode}`);
+    const emailSent = await EmailService.sendOTP(email, otpCode, 'registration');
     
-    res.status(200).json({ message: 'OTP sent successfully (Check console)' });
+    if (emailSent) {
+      res.status(200).json({ message: 'OTP sent successfully to your email' });
+    } else {
+      res.status(500).json({ error: 'Failed to send OTP email. Please try again later.' });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -33,4 +33,6 @@ router.get('/invoices', auth, role('buyer'), buyerController.getBuyerInvoices);
 router.get('/invoice/:id', auth, role('buyer'), buyerController.getInvoiceDetail);
 router.delete('/invoice/:id', auth, role('buyer'), buyerController.deleteInvoice);
 router.get('/events', auth, role('buyer'), buyerController.getBuyerEvents);
+router.get('/inbox', auth, role('buyer'), buyerController.getInbox);
+router.delete('/message/:id', auth, role('buyer'), buyerController.deleteMessage);
 module.exports = router;

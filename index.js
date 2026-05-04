@@ -1,4 +1,9 @@
 require('dotenv').config();
+
+// Fallback secrets (used when environment variables are not set, e.g. on Render)
+if (!process.env.JWT_SECRET) process.env.JWT_SECRET = '04f058abc86f6e6c016b595d68a1ec8f76609f81e931148e91240c46da68d10f';
+if (!process.env.GOOGLE_CLIENT_ID) process.env.GOOGLE_CLIENT_ID = '602850848367-tssnldslujlhkkei23iedefmp6pjvstk.apps.googleusercontent.com';
+
 const express = require('express');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
@@ -25,6 +30,16 @@ const limiter = rateLimit({
 // Apply rate limiter to all routes
 app.use('/api/', limiter);
 
+app.get('/api/test-secret', (req, res) => {
+  const secret = process.env.JWT_SECRET;
+  res.json({ 
+    set: !!secret, 
+    length: secret ? secret.length : 0,
+    prefix: secret ? secret.substring(0, 3) : 'none'
+  });
+});
+
+
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -49,8 +64,8 @@ app.use('/api/seller', require('./routes/seller'));
 app.use('/api/admin', require('./routes/admin'));
 
 // Database Connection
-db.sequelize.sync({ alter: true })
-  .then(() => console.log('MySQL Connected and Tables Altered'))
+db.sequelize.sync()
+  .then(() => console.log('MySQL Connected Successfully'))
   .catch(err => console.error('MySQL Connection Error:', err));
 
 const PORT = process.env.PORT || 5000;

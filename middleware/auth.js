@@ -6,7 +6,7 @@ const auth = async (req, res, next) => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) throw new Error('No token provided');
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, (process.env.JWT_SECRET || '04f058abc86f6e6c016b595d68a1ec8f76609f81e931148e91240c46da68d10f'));
     const user = await User.findByPk(decoded.id);
 
     if (!user) throw new Error('User not found');

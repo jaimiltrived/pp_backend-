@@ -110,6 +110,18 @@ exports.getInbox = async (req, res) => {
   }
 };
 
+exports.deleteMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const message = await Message.findOne({ where: { id, receiver_id: req.user.id } });
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+    await message.destroy();
+    res.json({ message: 'Message deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Get seller analytics (historical data for charts)
 exports.getAnalytics = async (req, res) => {
   try {

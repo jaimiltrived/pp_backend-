@@ -1,13 +1,25 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+// Fallback secrets for Render deployment (used when .env is not present)
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = '04f058abc86f6e6c016b595d68a1ec8f76609f81e931148e91240c46da68d10f';
+  console.log('JWT_SECRET set from fallback');
+} else {
+  console.log('JWT_SECRET detected from env');
+}
+
+if (!process.env.GOOGLE_CLIENT_ID) process.env.GOOGLE_CLIENT_ID = '602850848367-tssnldslujlhkkei23iedefmp6pjvstk.apps.googleusercontent.com';
+if (!process.env.FRONTEND_URL) process.env.FRONTEND_URL = 'http://localhost:5173';
+
+
 const sequelize = new Sequelize(
-  process.env.DB_NAME || process.env.MYSQLDATABASE || 'purchase_point',
+  process.env.DB_NAME || process.env.MYSQLDATABASE || 'pp_db',
   process.env.DB_USER || process.env.MYSQLUSER || 'root',
-  process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : (process.env.MYSQLPASSWORD || ''),
+  process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : (process.env.MYSQLPASSWORD || 'aemqpvGbdlNCLcEEaHcQvcuxcIrnMbaE'),
   {
-    host: process.env.DB_HOST || process.env.MYSQLHOST || '127.0.0.1',
-    port: process.env.DB_PORT || process.env.MYSQLPORT || 3307,
+    host: process.env.DB_HOST || process.env.MYSQLHOST || 'junction.proxy.rlwy.net',
+    port: process.env.DB_PORT || process.env.MYSQLPORT || 46619,
     dialect: process.env.DB_DIALECT || 'mysql',
     logging: false,
   }

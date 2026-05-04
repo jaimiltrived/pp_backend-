@@ -11,6 +11,7 @@ router.get('/bids', auth, role('seller'), sellerController.getMyBids);
 router.put('/bid/:id', auth, role('seller'), sellerController.updateBid);
 router.delete('/bid/:id', auth, role('seller'), sellerController.deleteBid);
 router.get('/inbox', auth, role('seller'), sellerController.getInbox);
+router.delete('/message/:id', auth, role('seller'), sellerController.deleteMessage);
 router.get('/analytics', auth, role('seller'), sellerController.getAnalytics);
 
 module.exports = router;

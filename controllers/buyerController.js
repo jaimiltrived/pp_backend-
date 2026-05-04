@@ -1,4 +1,4 @@
-const { User, RFQ, RFQItem, Quotation, Order, Organization, PersonalInfo, sequelize } = require('../config/db');
+const { User, RFQ, RFQItem, Quotation, Order, Organization, PersonalInfo, sequelize, Message } = require('../config/db');
 const { Op } = require('sequelize');
 
 // Buyer Dashboard
@@ -45,6 +45,29 @@ exports.dashboard = async (req, res) => {
       bid_count: r.quotations?.length || 0
     }));
 
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlyData = {};
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${months[d.getMonth()]}`;
+      monthlyData[key] = { name: key, spend: 0 };
+    }
+
+    const allOrders = await Order.findAll({
+      where: { UserId: user.id, status: 'completed' },
+      attributes: ['totalAmount', 'createdAt']
+    });
+
+    allOrders.forEach(o => {
+      const amt = parseFloat(o.totalAmount || 0);
+      const d = new Date(o.createdAt);
+      const key = months[d.getMonth()];
+      if (monthlyData[key]) {
+        monthlyData[key].spend += amt;
+      }
+    });
+
     res.json({
       message: 'Buyer Dashboard',
       total_rfqs,
@@ -54,6 +77,7 @@ exports.dashboard = async (req, res) => {
       delivered_orders,
       pending_orders,
       recent_rfqs: formatted_recent_rfqs,
+      chartData: Object.values(monthlyData),
       user: {
         id: user.id,
         name: user.name,
@@ -299,3 +323,27 @@ exports.getBuyerEvents = async (req, res) => {
   }
 };
 
+exports.getInbox = async (req, res) => {
+  try {
+    const messages = await Message.findAll({
+      where: { receiver_id: req.user.id },
+      order: [['createdAt', 'DESC']],
+      limit: 20
+    });
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.deleteMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const message = await Message.findOne({ where: { id, receiver_id: req.user.id } });
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+    await message.destroy();
+    res.json({ message: 'Message deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
