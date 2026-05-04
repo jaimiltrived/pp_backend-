@@ -37,20 +37,39 @@ exports.getDashboardStats = async (req, res) => {
 
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const startOf7Days = new Date(sevenDaysAgo.setHours(0,0,0,0));
 
-    const chartData = await Order.findAll({
+    // Pad last 7 days
+    const dailyData = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateString = d.toISOString().split('T')[0];
+      dailyData[dateString] = { date: dateString, count: 0, revenue: 0 };
+    }
+
+    const orderData = await Order.findAll({
       attributes: [
         [sequelize.fn('DATE', sequelize.col('createdAt')), 'date'],
         [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
         [sequelize.fn('SUM', sequelize.col('totalAmount')), 'revenue']
       ],
       where: {
-        createdAt: { [Op.gte]: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+        createdAt: { [Op.gte]: startOf7Days }
       },
       group: [sequelize.fn('DATE', sequelize.col('createdAt'))],
-      order: [[sequelize.fn('DATE', sequelize.col('createdAt')), 'ASC']],
       raw: true
     });
+
+    orderData.forEach(o => {
+      const dateStr = o.date instanceof Date ? o.date.toISOString().split('T')[0] : String(o.date).split(' ')[0];
+      if (dailyData[dateStr]) {
+        dailyData[dateStr].count = parseInt(o.count || 0);
+        dailyData[dateStr].revenue = parseFloat(o.revenue || 0);
+      }
+    });
+
+    const populatedChartData = Object.values(dailyData);
 
     res.json({
       summary: {
@@ -64,11 +83,7 @@ exports.getDashboardStats = async (req, res) => {
         activeSourcing: await RFQ.count({ where: { status: 'open' } }),
         validatedPartners: await User.count({ where: { status: 'active' } }),
       },
-      chartData: chartData.map(d => ({
-        date: d.date,
-        count: d.count,
-        revenue: parseFloat(d.revenue || 0)
-      })),
+      chartData: populatedChartData,
       recentActivity,
       uptime: '99.98%',
       efficiencyScore: '94.2%'
