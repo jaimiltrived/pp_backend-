@@ -37,39 +37,41 @@ exports.getDashboardStats = async (req, res) => {
 
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const startOf7Days = new Date(sevenDaysAgo.setHours(0,0,0,0));
+    sevenDaysAgo.setHours(0, 0, 0, 0);
 
-    // Pad last 7 days
+    const orders = await Order.findAll({
+      where: {
+        createdAt: { [Op.gte]: sevenDaysAgo }
+      },
+      attributes: ['totalAmount', 'createdAt', 'status'],
+      raw: true
+    });
+
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const dailyData = {};
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const dateString = d.toISOString().split('T')[0];
-      dailyData[dateString] = { date: dateString, count: 0, revenue: 0 };
+      const dateStr = d.toISOString().split('T')[0];
+      dailyData[dateStr] = {
+        date: dateStr,
+        name: dayNames[d.getDay()],
+        count: 0,
+        revenue: 0
+      };
     }
 
-    const orderData = await Order.findAll({
-      attributes: [
-        [sequelize.fn('DATE', sequelize.col('createdAt')), 'date'],
-        [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
-        [sequelize.fn('SUM', sequelize.col('totalAmount')), 'revenue']
-      ],
-      where: {
-        createdAt: { [Op.gte]: startOf7Days }
-      },
-      group: [sequelize.fn('DATE', sequelize.col('createdAt'))],
-      raw: true
-    });
-
-    orderData.forEach(o => {
-      const dateStr = o.date instanceof Date ? o.date.toISOString().split('T')[0] : String(o.date).split(' ')[0];
+    orders.forEach(order => {
+      const dateStr = new Date(order.createdAt).toISOString().split('T')[0];
       if (dailyData[dateStr]) {
-        dailyData[dateStr].count = parseInt(o.count || 0);
-        dailyData[dateStr].revenue = parseFloat(o.revenue || 0);
+        dailyData[dateStr].count++;
+        if (order.status === 'completed') {
+          dailyData[dateStr].revenue += parseFloat(order.totalAmount || 0);
+        }
       }
     });
 
-    const populatedChartData = Object.values(dailyData);
+    const finalChartData = Object.values(dailyData);
 
     res.json({
       summary: {
@@ -83,7 +85,7 @@ exports.getDashboardStats = async (req, res) => {
         activeSourcing: await RFQ.count({ where: { status: 'open' } }),
         validatedPartners: await User.count({ where: { status: 'active' } }),
       },
-      chartData: populatedChartData,
+      chartData: finalChartData,
       recentActivity,
       uptime: '99.98%',
       efficiencyScore: '94.2%'
